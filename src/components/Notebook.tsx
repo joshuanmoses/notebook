@@ -1,9 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TitleBar from "@/components/TitleBar";
 import MenuBar from "@/components/MenuBar";
 import TextEditor from "@/components/TextEditor";
 import StatusBar from "@/components/StatusBar";
+import FolderStructure from "@/components/FolderStructure";
+import { NoteFile } from "@/components/FolderStructure";
 import useFileOperations from "@/hooks/useFileOperations";
 
 const Notebook: React.FC = () => {
@@ -11,6 +13,7 @@ const Notebook: React.FC = () => {
     content,
     setContent,
     fileName,
+    setFileName,
     encoding,
     newFile,
     openFile,
@@ -21,9 +24,23 @@ const Notebook: React.FC = () => {
   const [showStatusBar, setShowStatusBar] = useState(true);
   const [fontFamily, setFontFamily] = useState("Consolas");
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
+  const [currentFileId, setCurrentFileId] = useState<string | null>(null);
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
 
   const handleCursorPositionChange = (line: number, column: number) => {
     setCursorPosition({ line, column });
+  };
+
+  const handleSelectFile = (file: NoteFile, folderId: string) => {
+    // Check if there are unsaved changes first
+    if (content && currentFileId && !confirm("Do you want to save changes to the current file?")) {
+      return;
+    }
+    
+    setContent(file.content);
+    setFileName(file.name);
+    setCurrentFileId(file.id);
+    setCurrentFolderId(folderId);
   };
 
   return (
@@ -43,14 +60,20 @@ const Notebook: React.FC = () => {
         openFile={openFile}
         newFile={newFile}
       />
-      <div className="flex-1 overflow-hidden">
-        <TextEditor
-          content={content}
-          setContent={setContent}
-          wordWrap={wordWrap}
-          fontFamily={fontFamily}
-          onCursorPositionChange={handleCursorPositionChange}
+      <div className="flex flex-1 overflow-hidden">
+        <FolderStructure 
+          onSelectFile={handleSelectFile}
+          currentFileId={currentFileId}
         />
+        <div className="flex-1 overflow-hidden">
+          <TextEditor
+            content={content}
+            setContent={setContent}
+            wordWrap={wordWrap}
+            fontFamily={fontFamily}
+            onCursorPositionChange={handleCursorPositionChange}
+          />
+        </div>
       </div>
       {showStatusBar && (
         <StatusBar

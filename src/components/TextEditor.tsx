@@ -1,6 +1,9 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
+import { Image } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 
 interface TextEditorProps {
   content: string;
@@ -18,6 +21,9 @@ const TextEditor: React.FC<TextEditorProps> = ({
   onCursorPositionChange,
 }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
   
   useEffect(() => {
     const updateCursorPosition = () => {
@@ -50,20 +56,179 @@ const TextEditor: React.FC<TextEditorProps> = ({
     }
   }, [onCursorPositionChange]);
 
+  const handleInsertImage = () => {
+    setImageDialogOpen(true);
+  };
+
+  const handleImageUrlSubmit = () => {
+    if (imageUrl && textAreaRef.current) {
+      const currentPosition = textAreaRef.current.selectionStart;
+      const imageMarkdown = `![Image](${imageUrl})`;
+      
+      const newContent = 
+        content.substring(0, currentPosition) +
+        imageMarkdown +
+        content.substring(currentPosition);
+      
+      setContent(newContent);
+      setImageDialogOpen(false);
+      setImageUrl("");
+    }
+  };
+
+  const handleImageUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && textAreaRef.current) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imgBase64 = event.target?.result as string;
+        const imageMarkdown = `![Image](${imgBase64})`;
+        
+        const currentPosition = textAreaRef.current!.selectionStart;
+        const newContent = 
+          content.substring(0, currentPosition) +
+          imageMarkdown +
+          content.substring(currentPosition);
+        
+        setContent(newContent);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const renderContent = () => {
+    if (!content) return null;
+
+    const parts = [];
+    const regex = /!\[.*?\]\((.*?)\)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(content)) !== null) {
+      // Add text before the image
+      if (match.index > lastIndex) {
+        parts.push(content.substring(lastIndex, match.index));
+      }
+      
+      // Add the image
+      const imageUrl = match[1];
+      parts.push(
+        <img 
+          key={match.index} 
+          src={imageUrl} 
+          alt="Embedded" 
+          className="max-w-full my-2" 
+          style={{ maxHeight: '300px' }}
+        />
+      );
+      
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add any remaining text
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+
+    return parts;
+  };
+
   return (
-    <textarea
-      ref={textAreaRef}
-      value={content}
-      onChange={(e) => setContent(e.target.value)}
-      className={cn(
-        "w-full h-full resize-none outline-none p-2 bg-white",
-        !wordWrap && "whitespace-pre overflow-x-auto"
-      )}
-      style={{
-        fontFamily,
-        lineHeight: "1.5"
-      }}
-    />
+    <div className="relative h-full">
+      <div className="absolute right-2 top-2 z-10">
+        <Button 
+          onClick={handleInsertImage} 
+          variant="outline" 
+          size="sm"
+          title="Insert Image"
+        >
+          <Image size={16} />
+        </Button>
+      </div>
+      
+      <input 
+        type="file" 
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+      />
+      
+      <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Insert Image</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="text-sm font-medium">Image URL</label>
+              <input
+                type="text"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="w-full p-2 border rounded mt-1"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+            <div className="flex justify-between">
+              <Button variant="outline" onClick={() => setImageDialogOpen(false)}>
+                Cancel
+              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleImageUpload} variant="secondary">
+                  Upload Image
+                </Button>
+                <Button onClick={handleImageUrlSubmit}>
+                  Insert
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      <div className="w-full h-full overflow-auto">
+        <div className="hidden">
+          <textarea
+            ref={textAreaRef}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className={cn(
+              "w-full h-full resize-none outline-none p-2 bg-white",
+              !wordWrap && "whitespace-pre overflow-x-auto"
+            )}
+            style={{
+              fontFamily,
+              lineHeight: "1.5"
+            }}
+          />
+        </div>
+        
+        <div 
+          className={cn(
+            "w-full h-full resize-none outline-none p-2 bg-white",
+            !wordWrap && "whitespace-pre overflow-x-auto"
+          )}
+          style={{
+            fontFamily,
+            lineHeight: "1.5"
+          }}
+          contentEditable
+          onInput={(e) => {
+            const target = e.currentTarget;
+            setContent(target.innerText);
+          }}
+        >
+          {renderContent()}
+        </div>
+      </div>
+    </div>
   );
 };
 

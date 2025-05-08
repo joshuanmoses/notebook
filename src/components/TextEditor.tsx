@@ -56,6 +56,45 @@ const TextEditor: React.FC<TextEditorProps> = ({
     }
   }, [onCursorPositionChange]);
 
+  // Handle paste events for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items || !textAreaRef.current) return;
+      
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          e.preventDefault(); // Prevent default paste behavior
+          
+          const blob = items[i].getAsFile();
+          if (!blob) continue;
+          
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const imgBase64 = event.target?.result as string;
+            const imageMarkdown = `![Image](${imgBase64})`;
+            
+            const currentPosition = textAreaRef.current!.selectionStart;
+            const newContent = 
+              content.substring(0, currentPosition) +
+              imageMarkdown +
+              content.substring(currentPosition);
+            
+            setContent(newContent);
+          };
+          reader.readAsDataURL(blob);
+          break; // Only handle the first image
+        }
+      }
+    };
+    
+    document.addEventListener('paste', handlePaste);
+    
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [content, setContent]);
+
   const handleInsertImage = () => {
     setImageDialogOpen(true);
   };
@@ -139,6 +178,46 @@ const TextEditor: React.FC<TextEditorProps> = ({
     return parts;
   };
 
+  // Add event handler for the editable div to support paste events
+  const handleEditorPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent default paste behavior
+        
+        const blob = items[i].getAsFile();
+        if (!blob) continue;
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const imgBase64 = event.target?.result as string;
+          const imageMarkdown = `![Image](${imgBase64})`;
+          
+          // Get current selection position in the contentEditable div
+          const selection = window.getSelection();
+          const range = selection?.getRangeAt(0);
+          
+          if (range) {
+            // Insert image markdown at cursor position
+            range.deleteContents();
+            const textNode = document.createTextNode(imageMarkdown);
+            range.insertNode(textNode);
+            
+            // Update content state
+            if (document.querySelector('[contenteditable="true"]')) {
+              const editableDiv = document.querySelector('[contenteditable="true"]')!;
+              setContent(editableDiv.innerText);
+            }
+          }
+        };
+        reader.readAsDataURL(blob);
+        break; // Only handle the first image
+      }
+    }
+  };
+
   return (
     <div className="relative h-full">
       <div className="absolute right-2 top-2 z-10">
@@ -220,6 +299,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
             lineHeight: "1.5"
           }}
           contentEditable
+          onPaste={handleEditorPaste}
           onInput={(e) => {
             const target = e.currentTarget;
             setContent(target.innerText);

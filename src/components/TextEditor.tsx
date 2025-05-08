@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
@@ -207,7 +206,7 @@ const TextEditor: React.FC<TextEditorProps> = ({
             
             // Update content state
             if (document.querySelector('[contenteditable="true"]')) {
-              const editableDiv = document.querySelector('[contenteditable="true"]')!;
+              const editableDiv = document.querySelector('[contenteditable="true"]') as HTMLDivElement;
               setContent(editableDiv.innerText);
             }
           }

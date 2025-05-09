@@ -49,7 +49,7 @@ const TitleBar: React.FC<TitleBarProps> = ({ fileName }) => {
                   Version 1.0.0
                 </p>
                 <p className="mt-2">
-                  Developed by: [Your Name]
+                  Developed by: Joshua N Moses
                 </p>
                 <p className="mt-4 text-sm text-gray-500">
                   A secure notebook application for storing and managing your passwords.

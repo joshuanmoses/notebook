@@ -27,7 +27,7 @@ const TitleBar: React.FC<TitleBarProps> = ({ fileName }) => {
   return (
     <div className="flex justify-between items-center px-4 py-2 bg-gray-200 border-b">
       <h1 className="text-sm font-medium">
-        {displayName} - Notebook Password Manager
+        {displayName} - Notebook
       </h1>
       <div className="flex items-center gap-2">
         <Dialog>
@@ -43,16 +43,16 @@ const TitleBar: React.FC<TitleBarProps> = ({ fileName }) => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>About Notebook Password Manager</DialogTitle>
+              <DialogTitle>About Notebook</DialogTitle>
               <DialogDescription>
                 <p className="mt-4">
                   Version 1.0.0
-                </p>
+                </p
                 <p className="mt-2">
                   Developed by: Joshua N Moses
                 </p>
                 <p className="mt-4 text-sm text-gray-500">
-                  A secure notebook application for storing and managing your passwords.
+                  A secure notebook application.
                 </p>
               </DialogDescription>
             </DialogHeader>

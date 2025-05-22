@@ -223,7 +223,7 @@ const MenuBar: React.FC<MenuBarProps> = ({
             Help
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => toast.info("Notebook - A simple text editor")}>
+            <DropdownMenuItem onClick={() => toast.info("Notebook - A simple text editor by Joshua N Moses")}>
               About Notebook
             </DropdownMenuItem>
           </DropdownMenuContent>
